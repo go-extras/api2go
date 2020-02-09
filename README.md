@@ -8,6 +8,8 @@
 
 A [JSON API](http://jsonapi.org) Implementation for Go, to be used e.g. as server for [Ember Data](https://github.com/emberjs/data).
 
+Note: this is a fork of the original library.
+
 ## TOC
 - [Installation](#installation)
 - [Basic functionality](#basic-functionality)
@@ -499,15 +501,17 @@ func (s *fixtureSource) FindAll(req api2go.Request) (Responder, error) {
 }
 ```
 
-If there are multiple values, you have to separate them with a comma. api2go automatically
-slices the values for you.
-
+If there are multiple values, you have to use multiple query string arguments.
 ```
 Example Request
-GET /people?fields=id,name,age
+GET /people?fields=id&fields=name&fields=age
 
 req.QueryParams["fields"] contains values: ["id", "name", "age"]
 ```
+
+Note: original api2go library used to split a single query string argument by a comma. It has a set of drawbacks
+as you effectively lose any but first arguments and might get a split where you don't want it. To get back the 
+original behavior you can do the split by yourself.
 
 ### Using Pagination
 Api2go can automatically generate the required links for pagination. Currently there are 2 combinations of query
