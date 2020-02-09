@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manyminds/api2go/jsonapi"
-	"github.com/manyminds/api2go/routing"
+	"github.com/go-extras/api2go/jsonapi"
+	"github.com/go-extras/api2go/routing"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gopkg.in/guregu/null.v2"
@@ -1192,7 +1192,7 @@ var _ = Describe("RestHandler", func() {
 		})
 
 		It("Extracts multiple parameters correctly", func() {
-			req, err := http.NewRequest("GET", "/v0/posts?sort=title,date", nil)
+			req, err := http.NewRequest("GET", "/v0/posts?sort=title&sort=date", nil)
 			Expect(err).To(BeNil())
 			c := &APIContext{}
 

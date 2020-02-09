@@ -12,11 +12,11 @@ import (
 	"unsafe"
 
 	"github.com/gin-gonic/gin"
-	"github.com/manyminds/api2go"
-	"github.com/manyminds/api2go/examples/model"
-	"github.com/manyminds/api2go/examples/resource"
-	"github.com/manyminds/api2go/examples/storage"
-	"github.com/manyminds/api2go/routing"
+	"github.com/go-extras/api2go"
+	"github.com/go-extras/api2go/examples/model"
+	"github.com/go-extras/api2go/examples/resource"
+	"github.com/go-extras/api2go/examples/storage"
+	"github.com/go-extras/api2go/routing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

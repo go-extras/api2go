@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manyminds/api2go/jsonapi"
-	"github.com/manyminds/api2go/routing"
+	"github.com/go-extras/api2go/jsonapi"
+	"github.com/go-extras/api2go/routing"
 )
 
 const (
@@ -244,8 +244,14 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 		return info
 	}
 
+	suffix := name
+	entityUrl, ok := prototype.(jsonapi.EntityUrler)
+	if ok {
+		suffix = entityUrl.GetUrl()
+	}
+
 	prefix := strings.Trim(api.info.prefix, "/")
-	baseURL := "/" + name
+	baseURL := "/" + suffix
 	if prefix != "" {
 		baseURL = "/" + prefix + baseURL
 	}
@@ -505,7 +511,11 @@ func buildRequest(c APIContexter, r *http.Request) Request {
 	params := make(map[string][]string)
 	pagination := make(map[string]string)
 	for key, values := range r.URL.Query() {
-		params[key] = strings.Split(values[0], ",")
+		// initially we had a comma-separated list taken from the first value
+		// but this is kinda hacky and splits fulltext queries by a comma
+		// also, ignoring further query arguments with the same way leaves you alone
+		// with a single argument and makes it impossible to utilize more than one item
+		params[key] = values
 		pageMatches := queryPageRegex.FindStringSubmatch(key)
 		if len(pageMatches) > 1 {
 			pagination[pageMatches[1]] = values[0]
