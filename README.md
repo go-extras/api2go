@@ -17,6 +17,7 @@ Note: this is a fork of the original library.
 - [Interfaces to implement](#interfaces-to-implement)
   - [Responder](#responder)
   - [EntityNamer](#entitynamer)
+  - [EntityUrler](#entityurler)
   - [MarshalIdentifier](#marshalidentifier)
   - [UnmarshalIdentifier](#unmarshalidentifier)
   - [Marshalling with References to other structs](#marshalling-with-references-to-other-structs)
@@ -166,6 +167,29 @@ have to implement `GetName`
 ```go
 func (s UnicornPost) GetName() string {
 	return "unicorn-posts"
+}
+```
+
+### EntityUrler
+```go
+type EntityUrler interface {
+	GetUrl() string
+}
+```
+
+EntityUrler is an optional interface. Normally, the url for an entity
+is taken from the entity name (either via [EntityNamer](#entitynamer) interface implementation)
+or is guessed from the struct type. But what if you want to have urls different
+than a document type (for example, you might want the type be a single name and
+the url to be a plural name). In this case you can implement the EntityUrler interface.
+
+If your entity has a name `post` and you then implement the `GetUrl()` method, which returns `my-posts`,
+then the url will be `/my-posts`, but the `type` field of the generated json and also the
+name for the generated routes will be `post`.
+
+```go
+func (s UnicornPost) GetUrl() string {
+	return "my-posts"
 }
 ```
 
