@@ -20,6 +20,12 @@ type CRUD interface {
 	ResourceUpdater
 }
 
+type CRRD interface {
+	ResourceCreator
+	ResourceDeleter
+	ResourceReplacer
+}
+
 // The ResourceCreator interface MUST be implemented in order to generate the POST route
 type ResourceCreator interface {
 	// Create a new object. Newly created object/struct must be in Responder.
@@ -41,7 +47,7 @@ type ResourceDeleter interface {
 	Delete(id string, req Request) (Responder, error)
 }
 
-// The ResourceUpdater interface MUST be implemented in order to generate the PATCH/PUT routes
+// The ResourceUpdater interface MUST be implemented in order to generate the PATCH routes
 type ResourceUpdater interface {
 	// ResourceGetter must be implemented along with ResourceUpdater so that api2go can retrieve the single resource before update
 	ResourceGetter
@@ -51,6 +57,17 @@ type ResourceUpdater interface {
 	// - 202 Accepted: Processing is delayed, return nothing
 	// - 204 No Content: Update was successful, no fields were changed by the server, return nothing
 	Update(obj interface{}, req Request) (Responder, error)
+}
+
+// The ResourceReplacer interface MUST be implemented in order to generate the PUT routes
+type ResourceReplacer interface {
+	// ResourceGetter must be implemented along with ResourceUpdater so that api2go can retrieve the single resource before update
+	ResourceGetter
+	// Update an object
+	// Possible Responder status codes are:
+	// - 200 OK: Update successful, returns updates source
+	// - 202 Accepted: Processing is delayed, return nothing
+	Replace(obj interface{}, req Request) (Responder, error)
 }
 
 // Pagination represents information needed to return pagination links

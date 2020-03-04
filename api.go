@@ -479,6 +479,25 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 		})
 	}
 
+	if _, ok := source.(ResourceReplacer); ok {
+		api.router.Handle("PUT", baseURL+"/:id", func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
+			info := requestInfo(r, api)
+			c := api.contextPool.Get().(APIContexter)
+			c.Reset()
+
+			for key, val := range context {
+				c.Set(key, val)
+			}
+
+			api.middlewareChain(c, w, r)
+			err := res.handleReplace(c, w, r, params, *info)
+			api.contextPool.Put(c)
+			if err != nil {
+				handleError(err, w, r, api.ContentType)
+			}
+		})
+	}
+
 	api.resources = append(api.resources, res)
 
 	return &res
@@ -493,6 +512,10 @@ func getAllowedMethods(source interface{}, collection bool) []string {
 
 	if _, ok := source.(ResourceUpdater); ok {
 		result = append(result, http.MethodPatch)
+	}
+
+	if _, ok := source.(ResourceReplacer); ok {
+		result = append(result, http.MethodPut)
 	}
 
 	if _, ok := source.(ResourceDeleter); ok && !collection {
@@ -780,6 +803,78 @@ func (res *resource) handleUpdate(c APIContexter, w http.ResponseWriter, r *http
 	}
 
 	response, err := source.Update(updatingObj.Interface(), buildRequest(c, r))
+
+	if err != nil {
+		return err
+	}
+
+	switch response.StatusCode() {
+	case http.StatusOK:
+		updated := response.Result()
+		if updated == nil {
+			internalResponse, err := source.FindOne(id, buildRequest(c, r))
+			if err != nil {
+				return err
+			}
+			updated = internalResponse.Result()
+			if updated == nil {
+				return fmt.Errorf("Expected FindOne to return one object of resource %s", res.name)
+			}
+
+			response = internalResponse
+		}
+
+		return res.respondWith(response, info, http.StatusOK, w, r)
+	case http.StatusAccepted:
+		w.WriteHeader(http.StatusAccepted)
+		return nil
+	case http.StatusNoContent:
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+	default:
+		return fmt.Errorf("invalid status code %d from resource %s for method Update", response.StatusCode(), res.name)
+	}
+}
+
+func (res *resource) handleReplace(c APIContexter, w http.ResponseWriter, r *http.Request, params map[string]string, info information) error {
+	source, ok := res.source.(ResourceReplacer)
+
+	if !ok {
+		return fmt.Errorf("Resource %s does not implement the ResourceReplacer interface", res.name)
+	}
+
+	id := params["id"]
+	obj, err := source.FindOne(id, buildRequest(c, r))
+	if err != nil {
+		return err
+	}
+
+	ctx, err := unmarshalRequest(r)
+	if err != nil {
+		return err
+	}
+
+	// we have to make the Result to a pointer to unmarshal into it
+	updatingObj := reflect.ValueOf(obj.Result())
+	if updatingObj.Kind() == reflect.Struct {
+		updatingObjPtr := reflect.New(reflect.TypeOf(obj.Result()))
+		updatingObjPtr.Elem().Set(updatingObj)
+		err = jsonapi.Unmarshal(ctx, updatingObjPtr.Interface())
+		updatingObj = updatingObjPtr.Elem()
+	} else {
+		err = jsonapi.Unmarshal(ctx, updatingObj.Interface())
+	}
+	if err != nil {
+		return NewHTTPError(nil, err.Error(), http.StatusNotAcceptable)
+	}
+
+	identifiable, ok := updatingObj.Interface().(jsonapi.MarshalIdentifier)
+	if !ok || identifiable.GetID() != id {
+		conflictError := errors.New("id in the resource does not match servers endpoint")
+		return NewHTTPError(conflictError, conflictError.Error(), http.StatusConflict)
+	}
+
+	response, err := source.Replace(updatingObj.Interface(), buildRequest(c, r))
 
 	if err != nil {
 		return err
