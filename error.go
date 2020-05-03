@@ -51,7 +51,7 @@ type ErrorSource struct {
 }
 
 // marshalHTTPError marshals an internal httpError
-func marshalHTTPError(input HTTPError) string {
+func marshalHTTPError(input *HTTPError) string {
 	if len(input.Errors) == 0 {
 		input.Errors = []Error{{Title: input.msg, Status: strconv.Itoa(input.status)}}
 	}

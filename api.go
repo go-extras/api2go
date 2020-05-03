@@ -904,7 +904,7 @@ func (res *resource) handleReplace(c APIContexter, w http.ResponseWriter, r *htt
 		w.WriteHeader(http.StatusNoContent)
 		return nil
 	default:
-		return fmt.Errorf("invalid status code %d from resource %s for method Update", response.StatusCode(), res.name)
+		return fmt.Errorf("invalid status code %d from resource %s for method Replace", response.StatusCode(), res.name)
 	}
 }
 
@@ -1323,13 +1323,17 @@ func replaceAttributes(query *map[string][]string, entry *jsonapi.Data) map[stri
 func handleError(err error, w http.ResponseWriter, r *http.Request, contentType string) {
 	log.Println(err)
 	if e, ok := err.(HTTPError); ok {
-		writeResult(w, []byte(marshalHTTPError(e)), e.status, contentType)
+		writeResult(w, []byte(marshalHTTPError(&e)), e.status, contentType)
 		return
 
 	}
+	if e, ok := err.(*HTTPError); ok {
+		writeResult(w, []byte(marshalHTTPError(e)), e.status, contentType)
+		return
+	}
 
 	e := NewHTTPError(err, err.Error(), http.StatusInternalServerError)
-	writeResult(w, []byte(marshalHTTPError(e)), http.StatusInternalServerError, contentType)
+	writeResult(w, []byte(marshalHTTPError(&e)), http.StatusInternalServerError, contentType)
 }
 
 // TODO: this can also be replaced with a struct into that we directly json.Unmarshal
