@@ -146,7 +146,7 @@ var _ = Describe("Test return code behavior", func() {
 	var (
 		api                *API
 		rec                *httptest.ResponseRecorder
-		payload, payloadID SomeData
+		payload, payloadID, payloadAccepted SomeData
 	)
 
 	BeforeEach(func() {
@@ -154,6 +154,7 @@ var _ = Describe("Test return code behavior", func() {
 		api.AddResource(SomeData{}, SomeResource{})
 		rec = httptest.NewRecorder()
 		payloadID = SomeData{ID: "12345", Data: "A Brezzn"}
+		payloadAccepted = SomeData{ID: "someID", Data: ""}
 		payload = SomeData{Data: "A Brezzn"}
 	})
 
@@ -184,7 +185,10 @@ var _ = Describe("Test return code behavior", func() {
 		It("return accepted and no content", func() {
 			post(SomeData{ID: "accept", Data: "nothing"})
 			Expect(rec.Code).To(Equal(http.StatusAccepted))
-			Expect(rec.Body.String()).To(BeEmpty())
+			var actual SomeData
+			err := jsonapi.Unmarshal(rec.Body.Bytes(), &actual)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(payloadAccepted).To(Equal(actual))
 		})
 
 		It("does not accept invalid return codes", func() {

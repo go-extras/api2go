@@ -345,7 +345,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 				}
 			}(relation))
 
-			api.router.Handle("GET", baseURL+"/:id/"+relation.Name, func(relation jsonapi.Reference) routing.HandlerFunc {
+			relGETHandler := func(relation jsonapi.Reference) routing.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
 					info := requestInfo(r, api)
 					c := api.contextPool.Get().(APIContexter)
@@ -362,7 +362,9 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 						handleError(err, w, r, api.ContentType)
 					}
 				}
-			}(relation))
+			}(relation)
+			api.router.Handle("GET", baseURL+"/:id/"+relation.Name, relGETHandler)
+			api.router.Handle("GET", baseURL+"/:id/"+relation.Name+"/:relid", relGETHandler)
 
 			api.router.Handle("PATCH", baseURL+"/:id/relationships/"+relation.Name, func(relation jsonapi.Reference) routing.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
@@ -758,6 +760,9 @@ func (res *resource) handleCreate(c APIContexter, w http.ResponseWriter, r *http
 		return nil
 	case http.StatusAccepted:
 		w.WriteHeader(response.StatusCode())
+		if response.Result() != nil {
+			return res.respondWith(response, info, http.StatusAccepted, w, r)
+		}
 		return nil
 	default:
 		return fmt.Errorf("invalid status code %d from resource %s for method Create", response.StatusCode(), res.name)
@@ -827,6 +832,9 @@ func (res *resource) handleUpdate(c APIContexter, w http.ResponseWriter, r *http
 		return res.respondWith(response, info, http.StatusOK, w, r)
 	case http.StatusAccepted:
 		w.WriteHeader(http.StatusAccepted)
+		if response.Result() != nil {
+			return res.respondWith(response, info, http.StatusAccepted, w, r)
+		}
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
@@ -899,6 +907,9 @@ func (res *resource) handleReplace(c APIContexter, w http.ResponseWriter, r *htt
 		return res.respondWith(response, info, http.StatusOK, w, r)
 	case http.StatusAccepted:
 		w.WriteHeader(http.StatusAccepted)
+		if response.Result() != nil {
+			return res.respondWith(response, info, http.StatusAccepted, w, r)
+		}
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
@@ -1151,6 +1162,13 @@ func (res *resource) handleDelete(c APIContexter, w http.ResponseWriter, r *http
 		return res.marshalResponse(data, w, http.StatusOK, r)
 	case http.StatusAccepted:
 		w.WriteHeader(http.StatusAccepted)
+		if len(response.Metadata()) > 0 {
+			data := map[string]interface{}{
+				"meta": response.Metadata(),
+			}
+
+			return res.marshalResponse(data, w, http.StatusAccepted, r)
+		}
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
