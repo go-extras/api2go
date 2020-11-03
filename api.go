@@ -759,10 +759,10 @@ func (res *resource) handleCreate(c APIContexter, w http.ResponseWriter, r *http
 		w.WriteHeader(response.StatusCode())
 		return nil
 	case http.StatusAccepted:
-		w.WriteHeader(response.StatusCode())
 		if response.Result() != nil {
 			return res.respondWith(response, info, http.StatusAccepted, w, r)
 		}
+		w.WriteHeader(response.StatusCode())
 		return nil
 	default:
 		return fmt.Errorf("invalid status code %d from resource %s for method Create", response.StatusCode(), res.name)
@@ -831,10 +831,10 @@ func (res *resource) handleUpdate(c APIContexter, w http.ResponseWriter, r *http
 
 		return res.respondWith(response, info, http.StatusOK, w, r)
 	case http.StatusAccepted:
-		w.WriteHeader(http.StatusAccepted)
 		if response.Result() != nil {
 			return res.respondWith(response, info, http.StatusAccepted, w, r)
 		}
+		w.WriteHeader(http.StatusAccepted)
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
@@ -906,10 +906,10 @@ func (res *resource) handleReplace(c APIContexter, w http.ResponseWriter, r *htt
 
 		return res.respondWith(response, info, http.StatusOK, w, r)
 	case http.StatusAccepted:
-		w.WriteHeader(http.StatusAccepted)
 		if response.Result() != nil {
 			return res.respondWith(response, info, http.StatusAccepted, w, r)
 		}
+		w.WriteHeader(http.StatusAccepted)
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
@@ -1161,7 +1161,6 @@ func (res *resource) handleDelete(c APIContexter, w http.ResponseWriter, r *http
 
 		return res.marshalResponse(data, w, http.StatusOK, r)
 	case http.StatusAccepted:
-		w.WriteHeader(http.StatusAccepted)
 		if len(response.Metadata()) > 0 {
 			data := map[string]interface{}{
 				"meta": response.Metadata(),
@@ -1169,6 +1168,7 @@ func (res *resource) handleDelete(c APIContexter, w http.ResponseWriter, r *http
 
 			return res.marshalResponse(data, w, http.StatusAccepted, r)
 		}
+		w.WriteHeader(http.StatusAccepted)
 		return nil
 	case http.StatusNoContent:
 		w.WriteHeader(http.StatusNoContent)
