@@ -12,9 +12,12 @@ import (
 // HandlerFunc for api2go middlewares
 type HandlerFunc func(APIContexter, http.ResponseWriter, *http.Request)
 
+type ErrorHandler func(err error, w http.ResponseWriter, r *http.Request, contentType string)
+
 // API is a REST JSONAPI.
 type API struct {
 	ContentType      string
+	ErrorHandler     ErrorHandler
 	router           routing.Routeable
 	info             information
 	resources        []resource
@@ -117,6 +120,7 @@ func newAPI(prefix string, resolver URLResolver, router routing.Routeable) *API 
 
 	api := &API{
 		ContentType:      defaultContentTypHeader,
+		ErrorHandler:     handleError,
 		router:           router,
 		info:             info,
 		middlewares:      make([]HandlerFunc, 0),

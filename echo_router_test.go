@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/labstack/echo"
 	"github.com/go-extras/api2go/routing"
+	"github.com/labstack/echo"
 )
 
 func customHTTPErrorHandler(err error, c echo.Context) {

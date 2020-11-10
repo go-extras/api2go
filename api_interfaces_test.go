@@ -144,8 +144,8 @@ var _ = Describe("Test interface api type casting", func() {
 
 var _ = Describe("Test return code behavior", func() {
 	var (
-		api                *API
-		rec                *httptest.ResponseRecorder
+		api                                 *API
+		rec                                 *httptest.ResponseRecorder
 		payload, payloadID, payloadAccepted SomeData
 	)
 

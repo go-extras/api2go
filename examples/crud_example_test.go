@@ -36,6 +36,9 @@ var _ = Describe("CrudExample", func() {
 				"attributes": {
 					"user-name": "marvin"
 				}
+			},
+			"meta": {
+				"custom": "customval"
 			}
 		}
 		`))
@@ -55,6 +58,7 @@ var _ = Describe("CrudExample", func() {
 				"attributes": {
 					"user-name": "marvin"
 				},
+				"meta": null,
 				"relationships": {
 					"sweets": {
 						"data": [],
@@ -146,6 +150,7 @@ var _ = Describe("CrudExample", func() {
 					"user-name": "marvin"
 				},
 				"id": "1",
+				"meta": null,
 				"relationships": {
 					"sweets": {
 						"data": [
@@ -205,17 +210,13 @@ var _ = Describe("CrudExample", func() {
 		Expect(rec.Code).To(Equal(http.StatusCreated))
 		Expect(rec.Body.String()).To(MatchJSON(`
           {
-            "meta": {
-              "author": "The api2go examples crew",
-              "license": "wtfpl",
-              "license-url": "http://www.wtfpl.net"
-            },
             "data": {
               "id": "1",
               "type": "users",
               "attributes": {
                 "user-name": "marvin"
               },
+              "meta": null,
               "relationships": {
                 "sweets": {
                   "data": [
@@ -230,6 +231,11 @@ var _ = Describe("CrudExample", func() {
                   }
                 }
               }
+            },
+            "meta": {
+              "author": "The api2go examples crew",
+              "license": "wtfpl",
+              "license-url": "http://www.wtfpl.net"
             }
           }
           `))
@@ -279,6 +285,7 @@ var _ = Describe("CrudExample", func() {
 					"user-name": "marvin"
 				},
 				"id": "1",
+				"meta": null,
 				"relationships": {
 					"sweets": {
 						"data": [],
@@ -331,6 +338,7 @@ var _ = Describe("CrudExample", func() {
 					"user-name": "marvin"
 				},
 				"id": "1",
+				"meta": null,
 				"relationships": {
 					"sweets": {
 						"data": [
@@ -455,6 +463,7 @@ var _ = Describe("CrudExample", func() {
 						"user-name": "marvin"
 					},
 					"id": "1",
+					"meta": null,
 					"relationships": {
 						"sweets": {
 							"data": [

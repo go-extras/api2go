@@ -438,6 +438,18 @@ If you want to return a jsonapi compatible error because something went wrong in
 `HTTPError` struct, which can be created with `NewHTTPError`. This allows you to set the error status code and add
 as many information about the error as you like. See: [jsonapi error](http://jsonapi.org/format/#errors)
 
+You can also define your own error handler:
+
+```go
+api := api2go.NewAPI("v1")
+api.ErrorHandler = func(err error, w http.ResponseWriter, r *http.Request, contentType string) {
+    // your custom code
+}
+```
+
+Note, that you might want to keep using the built-in error function while doing some extra stuff. If so, just save the original
+value of `api.ErrorHandler` and then use it in your custom handler.
+
 To fetch all objects of a specific resource you can choose to implement one or both of the following
 interfaces:
 

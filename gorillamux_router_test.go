@@ -5,8 +5,8 @@ package api2go
 import (
 	"log"
 
-	"github.com/gorilla/mux"
 	"github.com/go-extras/api2go/routing"
+	"github.com/gorilla/mux"
 )
 
 func newTestRouter() routing.Routeable {

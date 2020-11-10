@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-
 	"github.com/go-extras/api2go/jsonapi"
 )
 
@@ -25,6 +24,10 @@ func (u User) GetID() string {
 // SetID to satisfy jsonapi.UnmarshalIdentifier interface
 func (u *User) SetID(id string) error {
 	u.ID = id
+	return nil
+}
+
+func (u User) Meta() jsonapi.Meta {
 	return nil
 }
 

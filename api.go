@@ -173,12 +173,15 @@ func (n notAllowedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := NewHTTPError(nil, "Method Not Allowed", http.StatusMethodNotAllowed)
 	w.WriteHeader(http.StatusMethodNotAllowed)
 
+	errorHandler := handleError
+
 	contentType := defaultContentTypHeader
 	if n.API != nil {
 		contentType = n.API.ContentType
+		errorHandler = n.API.ErrorHandler
 	}
 
-	handleError(err, w, r, contentType)
+	errorHandler(err, w, r, contentType)
 }
 
 type resource struct {
@@ -284,7 +287,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 		err := res.handleIndex(c, w, r, *info)
 		api.contextPool.Put(c)
 		if err != nil {
-			handleError(err, w, r, api.ContentType)
+			api.ErrorHandler(err, w, r, api.ContentType)
 		}
 	})
 
@@ -316,7 +319,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 			err := res.handleRead(c, w, r, params, *info)
 			api.contextPool.Put(c)
 			if err != nil {
-				handleError(err, w, r, api.ContentType)
+				api.ErrorHandler(err, w, r, api.ContentType)
 			}
 		})
 	}
@@ -340,7 +343,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 					err := res.handleReadRelation(c, w, r, params, *info, relation)
 					api.contextPool.Put(c)
 					if err != nil {
-						handleError(err, w, r, api.ContentType)
+						api.ErrorHandler(err, w, r, api.ContentType)
 					}
 				}
 			}(relation))
@@ -359,7 +362,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 					err := res.handleLinked(c, api, w, r, params, relation, *info)
 					api.contextPool.Put(c)
 					if err != nil {
-						handleError(err, w, r, api.ContentType)
+						api.ErrorHandler(err, w, r, api.ContentType)
 					}
 				}
 			}(relation)
@@ -379,7 +382,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 					err := res.handleReplaceRelation(c, w, r, params, relation)
 					api.contextPool.Put(c)
 					if err != nil {
-						handleError(err, w, r, api.ContentType)
+						api.ErrorHandler(err, w, r, api.ContentType)
 					}
 				}
 			}(relation))
@@ -399,7 +402,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 						err := res.handleAddToManyRelation(c, w, r, params, relation)
 						api.contextPool.Put(c)
 						if err != nil {
-							handleError(err, w, r, api.ContentType)
+							api.ErrorHandler(err, w, r, api.ContentType)
 						}
 					}
 				}(relation))
@@ -417,7 +420,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 						err := res.handleDeleteToManyRelation(c, w, r, params, relation)
 						api.contextPool.Put(c)
 						if err != nil {
-							handleError(err, w, r, api.ContentType)
+							api.ErrorHandler(err, w, r, api.ContentType)
 						}
 					}
 				}(relation))
@@ -439,7 +442,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 			err := res.handleCreate(c, w, r, info.prefix, *info)
 			api.contextPool.Put(c)
 			if err != nil {
-				handleError(err, w, r, api.ContentType)
+				api.ErrorHandler(err, w, r, api.ContentType)
 			}
 		})
 	}
@@ -457,7 +460,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 			err := res.handleDelete(c, w, r, params)
 			api.contextPool.Put(c)
 			if err != nil {
-				handleError(err, w, r, api.ContentType)
+				api.ErrorHandler(err, w, r, api.ContentType)
 			}
 		})
 	}
@@ -476,7 +479,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 			err := res.handleUpdate(c, w, r, params, *info)
 			api.contextPool.Put(c)
 			if err != nil {
-				handleError(err, w, r, api.ContentType)
+				api.ErrorHandler(err, w, r, api.ContentType)
 			}
 		})
 	}
@@ -495,7 +498,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 			err := res.handleReplace(c, w, r, params, *info)
 			api.contextPool.Put(c)
 			if err != nil {
-				handleError(err, w, r, api.ContentType)
+				api.ErrorHandler(err, w, r, api.ContentType)
 			}
 		})
 	}
@@ -1341,9 +1344,7 @@ func replaceAttributes(query *map[string][]string, entry *jsonapi.Data) map[stri
 func handleError(err error, w http.ResponseWriter, r *http.Request, contentType string) {
 	log.Println(err)
 	if e, ok := err.(HTTPError); ok {
-		writeResult(w, []byte(marshalHTTPError(&e)), e.status, contentType)
-		return
-
+		err = &e
 	}
 	if e, ok := err.(*HTTPError); ok {
 		writeResult(w, []byte(marshalHTTPError(e)), e.status, contentType)
