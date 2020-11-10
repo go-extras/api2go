@@ -329,7 +329,7 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 	if ok {
 		relations := casted.GetReferences()
 		for _, relation := range relations {
-			relGetOneHandler := func(relation jsonapi.Reference) routing.HandlerFunc {
+			api.router.Handle("GET", baseURL+"/:id/relationships/"+relation.Name, func(relation jsonapi.Reference) routing.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
 					info := requestInfo(r, api)
 					c := api.contextPool.Get().(APIContexter)
@@ -346,11 +346,9 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 						api.ErrorHandler(err, w, r, api.ContentType)
 					}
 				}
-			}(relation)
-			api.router.Handle("GET", baseURL+"/:id/relationships/"+relation.Name, relGetOneHandler)
-			api.router.Handle("GET", baseURL+"/:id/"+relation.Name+"/:relid", relGetOneHandler)
+			}(relation))
 
-			api.router.Handle("GET", baseURL+"/:id/"+relation.Name, func(relation jsonapi.Reference) routing.HandlerFunc {
+			relGETHandler := func(relation jsonapi.Reference) routing.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
 					info := requestInfo(r, api)
 					c := api.contextPool.Get().(APIContexter)
@@ -367,7 +365,9 @@ func (api *API) addResource(prototype jsonapi.MarshalIdentifier, source interfac
 						api.ErrorHandler(err, w, r, api.ContentType)
 					}
 				}
-			}(relation))
+			}(relation)
+			api.router.Handle("GET", baseURL+"/:id/"+relation.Name, relGETHandler)
+			api.router.Handle("GET", baseURL+"/:id/"+relation.Name+"/:relid", relGETHandler)
 
 			api.router.Handle("PATCH", baseURL+"/:id/relationships/"+relation.Name, func(relation jsonapi.Reference) routing.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request, params map[string]string, context map[string]interface{}) {
@@ -677,6 +677,19 @@ func (res *resource) handleLinked(c APIContexter, api *API, w http.ResponseWrite
 
 					return res.respondWithPagination(response, info, http.StatusOK, paginationLinks, w, r)
 				}
+			}
+
+			if relid, ok := params["relid"]; ok {
+				source, ok := resource.source.(ResourceGetter)
+				if !ok {
+					return NewHTTPError(nil, "Resource does not implement the ResourceGetter interface", http.StatusNotFound)
+				}
+
+				obj, err := source.FindOne(relid, request)
+				if err != nil {
+					return err
+				}
+				return res.respondWith(obj, info, http.StatusOK, w, r)
 			}
 
 			source, ok := resource.source.(FindAll)
