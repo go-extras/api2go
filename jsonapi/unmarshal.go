@@ -79,7 +79,7 @@ type EditToManyRelations interface {
 // Unmarshal parses a JSON API compatible JSON and populates the target which
 // must implement the `UnmarshalIdentifier` interface.
 func Unmarshal(data []byte, target interface{}) error {
-	if target == nil {
+	if isNil(target) {
 		return errors.New("target must not be nil")
 	}
 
