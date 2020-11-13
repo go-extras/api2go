@@ -1,0 +1,27 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+      id: go
+
+    - uses: actions/checkout@v2
+
+    - name: Install ginkgo
+      run: go get github.com/onsi/ginkgo/ginkgo
+
+    - name: Test
+      run: ginkgo -race -progress -r
